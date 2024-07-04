@@ -85,6 +85,14 @@ jobs:
       with:
         file-to-analyze: ${{ steps.strings.outputs.build-output-dir }}/compile_commands.json
         analysis-mode: GA;OP;64;CS;MISRA;AUTOSAR;OWASP
+        paralell: auto
+        excluded-dirs: ${{ github.workspace }}/libs;${{ github.workspace }}/thirdparty
+        suppress-files: |
+          ${{ github.workspace }}/.PVS-Studio/falsealarms.suppress.json
+          ${{ github.workspace }}/.PVS-Studio/legacy.suppress.json
+        rules-configs: |
+          ${{ github.workspace }}/.PVS-Studio/basic.pvsconfig
+          ${{ github.workspace }}/.PVS-Studio/extra.pvsconfig
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
