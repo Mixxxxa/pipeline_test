@@ -91,7 +91,7 @@ jobs:
         output-format: 'sarif'
         output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.sarif
         source-tree-root: ${{ github.workspace }}
-        paralell: 2
+        parallel: 2
         excluded-dirs: ${{ github.workspace }}/libs;${{ github.workspace }}/thirdparty
         suppress-files: |
           ${{ github.workspace }}/.PVS-Studio/falsealarms.suppress.json
