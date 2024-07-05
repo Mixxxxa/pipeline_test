@@ -22,6 +22,10 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -101,6 +105,12 @@ jobs:
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Upload CCDB
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'ccdb-${{ runner.os }}'
+        path: ${{ steps.strings.outputs.compile-db-filepath }}
 
     - name: Print CCDB
       run: cat ${{ steps.strings.outputs.compile-db-filepath }}
