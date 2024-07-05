@@ -146,12 +146,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
 
-    - name: Publish static analysis report
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: ${{ steps.pvssarif.outputs.report }}
-        category: PVS-Studio
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -160,3 +154,9 @@ jobs:
           ${{ steps.pvssarif.outputs.report }}
           ${{ steps.pvssarif.outputs.raw-report }}
           ${{ steps.strings.outputs.compile-db-filepath }}
+
+    - name: Publish static analysis report
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.pvssarif.outputs.report }}
+        category: PVS-Studio
