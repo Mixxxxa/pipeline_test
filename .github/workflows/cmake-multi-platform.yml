@@ -103,7 +103,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Print CCDB
-      run: cat ${{ steps.strings.outputs.build-output-dir }}
+      run: cat ${{ steps.strings.outputs.compile-db-filepath }}
 
     - name: Analyze with PVS-Studio
       uses: Mixxxxa/pvsstudiopipeline@main
