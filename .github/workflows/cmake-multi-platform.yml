@@ -106,6 +106,7 @@ jobs:
       run: cat ${{ steps.strings.outputs.compile-db-filepath }}
 
     - name: Analyze with PVS-Studio
+      id: pvstestall
       uses: Mixxxxa/pvsstudiopipeline@main
       env:
         PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
@@ -114,7 +115,7 @@ jobs:
         file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
         analysis-mode: GA;OP;64;CS;MISRA;AUTOSAR;OWASP
         output-format: 'json'
-        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.sarif
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.json
         source-tree-root: ${{ github.workspace }}
         parallel: 2
         excluded-dirs: ${{ github.workspace }}/libs;${{ github.workspace }}/thirdparty
@@ -128,6 +129,7 @@ jobs:
           --analyze-specified-system-paths
 
     - name: Yet another PVS-Studio analysis
+      id: pvssarif
       uses: Mixxxxa/pvsstudiopipeline@main
       env:
         PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
@@ -137,10 +139,24 @@ jobs:
         analysis-mode: GA;OP
         output-format: 'sarif'
         output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report-for-git.sarif
-        
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
+    - name: Publish static analysis report
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.pvssarif.outputs.report }}
+        category: PVS-Studio
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'pvs-${{ runner.os }}'
+        path: |
+          ${{ steps.pvssarif.outputs.report }}
+          ${{ steps.pvssarif.outputs.raw-report }}
+          ${{ steps.strings.outputs.compile-db-filepath }}
