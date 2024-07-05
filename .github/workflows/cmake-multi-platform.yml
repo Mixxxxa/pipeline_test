@@ -34,7 +34,7 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         include:
@@ -66,7 +66,7 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     - name: Initialize MSVC development environment
-      if: matrix.os == 'windows-latest'
+      if: ${{ matrix.os }} == 'windows-latest'
       uses: ilammy/msvc-dev-cmd@v1
 
     - name: Configure CMake
