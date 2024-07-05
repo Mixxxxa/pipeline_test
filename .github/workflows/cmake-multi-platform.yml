@@ -113,7 +113,7 @@ jobs:
       with:
         file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
         analysis-mode: GA;OP;64;CS;MISRA;AUTOSAR;OWASP
-        output-format: 'sarif'
+        output-format: 'json'
         output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.sarif
         source-tree-root: ${{ github.workspace }}
         parallel: 2
@@ -126,6 +126,17 @@ jobs:
           ${{ github.workspace }}/.PVS-Studio/extra.pvsconfig
         additional-args: |
           --analyze-specified-system-paths
+
+    - name: Yet another PVS-Studio analysis
+      uses: Mixxxxa/pvsstudiopipeline@main
+      env:
+        PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
+        PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
+      with:
+        file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
+        analysis-mode: GA;OP
+        output-format: 'sarif'
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report-for-git.sarif
         
 
     - name: Test
