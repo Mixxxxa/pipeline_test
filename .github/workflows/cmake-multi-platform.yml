@@ -44,15 +44,20 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+          - os: macos-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          #- os: ubuntu-latest
+          #  c_compiler: clang
+          #  cpp_compiler: clang++
         exclude:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
             c_compiler: clang
           - os: ubuntu-latest
+            c_compiler: cl
+          - os: macos-latest
             c_compiler: cl
 
     steps:
@@ -65,8 +70,24 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Install dev tools
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt update
+          sudo apt install ninja-build
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+          choco install ninja
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          brew update
+          brew install ninja
+        else
+          echo "$RUNNER_OS is not supported"
+          exit 1
+        fi
+      shell: bash
+
     - name: Initialize MSVC development environment
-      if: ${{ matrix.os }} == 'windows-latest'
+      if: runner.os == 'Windows'
       uses: ilammy/msvc-dev-cmd@v1
 
     - name: Configure CMake
