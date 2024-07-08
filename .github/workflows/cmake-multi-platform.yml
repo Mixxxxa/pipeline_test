@@ -117,7 +117,7 @@ jobs:
 
     - name: Analyze with PVS-Studio
       id: pvstestall
-      uses: Mixxxxa/pvsstudiopipeline@main
+      uses: Mixxxxa/pvsstudiopipeline@typescript
       env:
         PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
         PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
@@ -140,7 +140,7 @@ jobs:
 
     - name: Yet another PVS-Studio analysis
       id: pvssarif
-      uses: Mixxxxa/pvsstudiopipeline@main
+      uses: Mixxxxa/pvsstudiopipeline@typescript
       env:
         PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
         PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
