@@ -109,7 +109,7 @@ jobs:
 
     - name: Analyze with PVS-Studio (Simple)
       id: pvs-analysis-simple
-      uses: Mixxxxa/pvsstudiopipeline/cpp-analyze@dev
+      uses: Mixxxxa/pvsstudiopipeline/cpp-analysis@dev
       env:
         PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
         PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
@@ -118,7 +118,7 @@ jobs:
 
     - name: Analyze with PVS-Studio (Custom)
       id: pvs-analysis-custom
-      uses: Mixxxxa/pvsstudiopipeline/cpp-analyze@dev
+      uses: Mixxxxa/pvsstudiopipeline/cpp-analysis@dev
       env:
         PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
         PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
