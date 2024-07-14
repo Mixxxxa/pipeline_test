@@ -78,7 +78,7 @@ jobs:
       id: pvs-trace
       uses: Mixxxxa/pvsstudiopipeline/cpp-trace@dev
       with:
-        trace-args: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+        trace-args: '["cmake", "--build", "${{ steps.strings.outputs.build-output-dir }}", "--config", "${{ matrix.build_type }}"]'    
         ignore-return-code: false
 
     - name: Upload trace
