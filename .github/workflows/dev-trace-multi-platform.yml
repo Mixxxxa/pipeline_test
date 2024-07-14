@@ -1,0 +1,110 @@
+# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+name: Analysis with trace on multiple platforms
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      targetPlatform:
+        description: 'Platform to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - linux
+        - macos
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      # Set up a matrix to run the following 3 configurations:
+      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
+      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
+      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
+      #
+      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Release]
+        c_compiler: [gcc, cl]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: macos-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+        exclude:
+          - os: ubuntu-latest
+            c_compiler: cl
+          - os: macos-latest
+            c_compiler: cl
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "compile-db-filepath=${{ github.workspace }}/build/compile_commands.json" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+
+    - name: Build with trace
+      id: pvs-trace
+      uses: Mixxxxa/pvsstudiopipeline/cpp-trace@dev
+      with:
+        trace-args: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+        ignore-return-code: false
+
+    - name: Upload trace
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'ccdb-${{ runner.os }}'
+        path: ${{ steps.pvs-trace.outputs.trace-file }}
+
+    - name: Analyze with PVS-Studio (Simple)
+      id: pvs-analysis
+      uses: Mixxxxa/pvsstudiopipeline/cpp-analyze@dev
+      env:
+        PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
+        PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
+      with:
+        file-to-analyze: ${{ steps.pvs-trace.outputs.trace-file }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'pvs-${{ runner.os }}'
+        path: |
+          ${{ steps.pvs-trace.outputs.trace-file }}
+          ${{ steps.pvs-analysis.outputs.raw-report }}
+
+    #- name: Publish static analysis report
+    #  uses: github/codeql-action/upload-sarif@v3
+    #  with:
+    #    sarif_file: ${{ steps.pvssarif.outputs.report }}
+    #    category: PVS-Studio
