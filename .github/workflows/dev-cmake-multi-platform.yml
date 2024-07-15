@@ -137,6 +137,28 @@ jobs:
           ${{ github.workspace }}/.PVS-Studio/extra.pvsconfig
         additional-args: |
           --analyze-specified-system-paths
+    
+    - name: Convert report (JSON)
+      id: pvs-convert-json
+      uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
+      with:
+        input-files: ${{ steps.pvs-analysis-simple.outputs.raw-report }}
+        output-format: 'json'
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.json
+
+    - name: Convert report (SARIF)
+      id: pvs-convert-sarif
+      uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
+      with:
+        input-files: ${{ steps.pvs-analysis-simple.outputs.raw-report }}
+        output-format: 'sarif'
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.sarif
+        groups-and-levels: 'GA:1,2,3;OP:1,2,3;64:1,2,3;CS:1,2,3;MISRA:1,2,3;AUTOSAR:1,2,3;OWASP:1,2,3'
+        excluded-paths: | 
+          ${{ github.workspace }}/libs
+          ${{ github.workspace }}/thirdparty
+        path-transformation-mode: 'toAbsolute'
+        source-tree-root: ${{ github.workspace }}
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
@@ -152,9 +174,11 @@ jobs:
           ${{ steps.pvs-analysis-simple.outputs.raw-report }}
           ${{ steps.pvs-analysis-custom.outputs.raw-report }}
           ${{ steps.strings.outputs.compile-db-filepath }}
+          ${{ steps.pvs-convert-json.outputs.report }}
+          ${{ steps.pvs-convert-sarif.outputs.report }}
 
-    #- name: Publish static analysis report
-    #  uses: github/codeql-action/upload-sarif@v3
-    #  with:
-    #    sarif_file: ${{ steps.pvssarif.outputs.report }}
-    #    category: PVS-Studio
+    - name: Publish static analysis report
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.pvs-convert-sarif.outputs.report }}
+        category: PVS-Studio

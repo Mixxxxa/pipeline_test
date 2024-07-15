@@ -96,6 +96,14 @@ jobs:
       with:
         file-to-analyze: ${{ steps.pvs-trace.outputs.trace-file }}
 
+    - name: Convert report (JSON)
+      id: pvs-convert-json
+      uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
+      with:
+        input-files: ${{ steps.pvs-analysis.outputs.raw-report }}
+        output-format: 'json'
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.json
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -103,9 +111,5 @@ jobs:
         path: |
           ${{ steps.pvs-trace.outputs.trace-file }}
           ${{ steps.pvs-analysis.outputs.raw-report }}
+          ${{ steps.pvs-convert-json.outputs.report }}
 
-    #- name: Publish static analysis report
-    #  uses: github/codeql-action/upload-sarif@v3
-    #  with:
-    #    sarif_file: ${{ steps.pvssarif.outputs.report }}
-    #    category: PVS-Studio
