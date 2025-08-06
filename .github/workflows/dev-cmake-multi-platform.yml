@@ -115,6 +115,9 @@ jobs:
         PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
       with:
         file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
+        additional-args: |
+          --analyze-specified-system-paths
+          --disableLicenseExpirationCheck
 
     - name: Analyze with PVS-Studio (Custom)
       id: pvs-analysis-custom
@@ -137,6 +140,7 @@ jobs:
           ${{ github.workspace }}/.PVS-Studio/extra.pvsconfig
         additional-args: |
           --analyze-specified-system-paths
+          --disableLicenseExpirationCheck
     
     - name: Convert report (JSON)
       id: pvs-convert-json
