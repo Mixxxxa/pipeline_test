@@ -97,18 +97,18 @@ jobs:
 
     - name: analyzer before
       shell: pwsh
-      run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompileCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
+      run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
 
     - name: Download beta pvs-studio analyzer
       if: runner.os == 'Windows' and ${{ github.event.inputs.overrideAnalyzerLink == 'true' }}
       shell: powershell
       run: |
         $directLink = "${{ github.event.inputs.overrideAnalyzer }}"
-        Invoke-WebRequest -Uri $directLink -OutFile "C:\Program Files (x86)\PVS-Studio\CompileCommandsAnalyzer.exe"
+        Invoke-WebRequest -Uri $directLink -OutFile "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe"
 
     - name: analyzer after
       shell: pwsh
-      run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompileCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
+      run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
 
     - name: Initialize MSVC development environment
       if: runner.os == 'Windows'
