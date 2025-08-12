@@ -26,7 +26,7 @@ on:
         default: 'false'
       overrideAnalyzerLink:
         description: 'Ссылка на анализатор'
-        default: 'false'
+        default: ''
 
 jobs:
   build:
@@ -107,6 +107,7 @@ jobs:
         Invoke-WebRequest -Uri $directLink -OutFile "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe"
 
     - name: analyzer after
+      if: runner.os == 'Windows' and ${{ github.event.inputs.overrideAnalyzer == 'true' }}
       shell: pwsh
       run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
 
@@ -126,21 +127,21 @@ jobs:
         -DCMAKE_EXPORT_COMPILE_COMMANDS=On
         -S ${{ github.workspace }}
 
-    #- name: Build
-    #  # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-    #  run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+    - name: Build
+      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    # - name: Analyze with PVS-Studio (Simple)
-    #   id: pvs-analysis-simple
-    #   uses: Mixxxxa/pvsstudiopipeline/cpp-analysis@dev
-    #   env:
-    #     PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
-    #     PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
-    #   with:
-    #     file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
-    #     additional-args: |
-    #       --analyze-specified-system-paths
-    #       --disableLicenseExpirationCheck
+    - name: Analyze with PVS-Studio (Simple)
+      id: pvs-analysis-simple
+      uses: Mixxxxa/pvsstudiopipeline/cpp-analysis@dev
+      env:
+        PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
+        PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
+      with:
+        file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
+        additional-args: |
+          --analyze-specified-system-paths
+          --disableLicenseExpirationCheck
 
     # - name: Analyze with PVS-Studio (Custom)
     #   id: pvs-analysis-custom
@@ -164,28 +165,48 @@ jobs:
     #     additional-args: |
     #       --analyze-specified-system-paths
     #       --disableLicenseExpirationCheck
-    
-    # - name: Convert report (JSON)
-    #   id: pvs-convert-json
-    #   uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
-    #   with:
-    #     input-files: ${{ steps.pvs-analysis-simple.outputs.raw-report }}
-    #     output-format: 'json'
-    #     output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.json
 
-    # - name: Convert report (SARIF)
-    #   id: pvs-convert-sarif
-    #   uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
-    #   with:
-    #     input-files: ${{ steps.pvs-analysis-simple.outputs.raw-report }}
-    #     output-format: 'sarif'
-    #     output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.sarif
-    #     groups-and-levels: 'GA:1,2,3;OP:1,2,3;64:1,2,3;CS:1,2,3;MISRA:1,2,3;AUTOSAR:1,2,3;OWASP:1,2,3'
-    #     excluded-paths: | 
-    #       ${{ github.workspace }}/libs
-    #       ${{ github.workspace }}/thirdparty
-    #     path-transformation-mode: 'toAbsolute'
-    #     source-tree-root: ${{ github.workspace }}
+    - name: Analyze with PVS-Studio (Custom)
+      id: pvs-analysis-custom
+      uses: Mixxxxa/pvsstudiopipeline/cpp-analysis@dev
+      env:
+        PVS_STUDIO_LICENSE_NAME: ${{secrets.PVS_STUDIO_NAME}}
+        PVS_STUDIO_LICENSE_KEY: ${{secrets.PVS_STUDIO_KEY}}
+      with:
+        file-to-analyze: ${{ steps.strings.outputs.compile-db-filepath }}
+        analysis-mode: GA;OP;64;CS;MISRA;AUTOSAR;OWASP
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.log
+        source-tree-root: ${{ github.workspace }}
+        parallel: 2
+        excluded-dirs: ${{ github.workspace }}/libs;${{ github.workspace }}/thirdparty
+        rules-configs: |
+          ${{ github.workspace }}/.PVS-Studio/basic.pvsconfig
+          ${{ github.workspace }}/.PVS-Studio/extra.pvsconfig
+        additional-args: |
+          --analyze-specified-system-paths
+          --disableLicenseExpirationCheck
+    
+    - name: Convert report (JSON)
+      id: pvs-convert-json
+      uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
+      with:
+        input-files: ${{ steps.pvs-analysis-simple.outputs.raw-report }}
+        output-format: 'json'
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.json
+
+    - name: Convert report (SARIF)
+      id: pvs-convert-sarif
+      uses: Mixxxxa/pvsstudiopipeline/convert-report@dev
+      with:
+        input-files: ${{ steps.pvs-analysis-simple.outputs.raw-report }}
+        output-format: 'sarif'
+        output-file: ${{ steps.strings.outputs.build-output-dir }}/pvs-report.sarif
+        groups-and-levels: 'GA:1,2,3;OP:1,2,3;64:1,2,3;CS:1,2,3;MISRA:1,2,3;AUTOSAR:1,2,3;OWASP:1,2,3'
+        excluded-paths: | 
+          ${{ github.workspace }}/libs
+          ${{ github.workspace }}/thirdparty
+        path-transformation-mode: 'toAbsolute'
+        source-tree-root: ${{ github.workspace }}
 
     # - name: Test
     #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
@@ -193,16 +214,16 @@ jobs:
     #   # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
     #   run: ctest --build-config ${{ matrix.build_type }}
 
-    # - name: Upload artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: 'pvs-${{ runner.os }}'
-    #     path: |
-    #       ${{ steps.pvs-analysis-simple.outputs.raw-report }}
-    #       ${{ steps.pvs-analysis-custom.outputs.raw-report }}
-    #       ${{ steps.strings.outputs.compile-db-filepath }}
-    #       ${{ steps.pvs-convert-json.outputs.report }}
-    #       ${{ steps.pvs-convert-sarif.outputs.report }}
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'pvs-${{ runner.os }}'
+        path: |
+          ${{ steps.pvs-analysis-simple.outputs.raw-report }}
+          ${{ steps.pvs-analysis-custom.outputs.raw-report }}
+          ${{ steps.strings.outputs.compile-db-filepath }}
+          ${{ steps.pvs-convert-json.outputs.report }}
+          ${{ steps.pvs-convert-sarif.outputs.report }}
 
     # - name: Publish static analysis report
     #   uses: github/codeql-action/upload-sarif@v3
