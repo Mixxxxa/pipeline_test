@@ -3,8 +3,8 @@
 name: Analysis on multiple platforms
 
 on:
-  push:
-    branches: [ "main" ]
+  #push:
+  #  branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -22,6 +22,7 @@ on:
       overrideAnalyzer:
         description: 'Подменить анализатор'
         required: true
+        type: 'boolean'
         default: 'false'
 
 jobs:
@@ -46,23 +47,23 @@ jobs:
         os: [windows-latest] #[ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
         c_compiler: [gcc, cl]
-        include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: macos-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-        exclude:
-          - os: windows-latest
-            c_compiler: gcc
-          - os: ubuntu-latest
-            c_compiler: cl
-          - os: macos-latest
-            c_compiler: cl
+        # include:
+        #   - os: windows-latest
+        #     c_compiler: cl
+        #     cpp_compiler: cl
+        #   - os: ubuntu-latest
+        #     c_compiler: gcc
+        #     cpp_compiler: g++
+        #   - os: macos-latest
+        #     c_compiler: gcc
+        #     cpp_compiler: g++
+        # exclude:
+        #   - os: windows-latest
+        #     c_compiler: gcc
+        #   - os: ubuntu-latest
+        #     c_compiler: cl
+        #   - os: macos-latest
+        #     c_compiler: cl
 
     steps:
     - uses: actions/checkout@v4
