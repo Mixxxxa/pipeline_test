@@ -46,11 +46,11 @@ jobs:
       matrix:
         os: [windows-latest] #[ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
-        c_compiler: [gcc, cl]
-        # include:
-        #   - os: windows-latest
-        #     c_compiler: cl
-        #     cpp_compiler: cl
+        #c_compiler: [gcc, cl]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
         #   - os: ubuntu-latest
         #     c_compiler: gcc
         #     cpp_compiler: g++
@@ -92,6 +92,17 @@ jobs:
         fi
       shell: bash
 
+    - name: Print Choco logs
+      run: cat C:\ProgramData\chocolatey\logs\chocolatey.log
+
+    - name: Download beta pvs-studio analyzer
+      if: runner.os == 'Windows' and ${{ github.event.inputs.run_step == 'true' }}
+      shell: powershell
+      run: |
+        $jsonResponse = Invoke-RestMethod -Uri "$env:BETA_ANALYZER_LINK"
+        $directLink = $jsonResponse.href
+        Invoke-WebRequest -Uri $directLink -OutFile ".\CompileCommandsAnalyzer.exe"
+
     - name: Initialize MSVC development environment
       if: runner.os == 'Windows'
       uses: ilammy/msvc-dev-cmd@v1
@@ -111,17 +122,6 @@ jobs:
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
-
-    - name: Print Choco logs
-      run: cat C:\ProgramData\chocolatey\logs\chocolatey.log
-
-    - name: Download beta pvs-studio analyzer
-      if: runner.os == 'Windows' and ${{ github.event.inputs.run_step == 'true' }}
-      shell: powershell
-      run: |
-        $jsonResponse = Invoke-RestMethod -Uri "$env:BETA_ANALYZER_LINK"
-        $directLink = $jsonResponse.href
-        Invoke-WebRequest -Uri $directLink -OutFile ".\CompileCommandsAnalyzer.exe"
 
     # - name: Analyze with PVS-Studio (Simple)
     #   id: pvs-analysis-simple
