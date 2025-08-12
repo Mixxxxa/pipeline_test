@@ -85,7 +85,7 @@ jobs:
           sudo apt update
           sudo apt install ninja-build
         elif [ "$RUNNER_OS" == "Windows" ]; then
-          choco install ninja pvs-studio
+          choco install ninja pvs-studio --no-progress
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew update
           brew install ninja
@@ -96,7 +96,8 @@ jobs:
       shell: bash
 
     - name: analyzer before
-      run: pvs-studio-analyzer --version
+      shell: pwsh
+      run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompileCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
 
     - name: Download beta pvs-studio analyzer
       if: runner.os == 'Windows' and ${{ github.event.inputs.overrideAnalyzerLink == 'true' }}
@@ -106,7 +107,8 @@ jobs:
         Invoke-WebRequest -Uri $directLink -OutFile "C:\Program Files (x86)\PVS-Studio\CompileCommandsAnalyzer.exe"
 
     - name: analyzer after
-      run: pvs-studio-analyzer --version
+      shell: pwsh
+      run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompileCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
 
     - name: Initialize MSVC development environment
       if: runner.os == 'Windows'
