@@ -100,10 +100,10 @@ jobs:
       run: Start-Process -FilePath "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe" -NoNewWindow -Wait -ArgumentList "--version"
 
     - name: Download beta pvs-studio analyzer
-      if: runner.os == 'Windows' and ${{ github.event.inputs.overrideAnalyzerLink == 'true' }}
+      if: runner.os == 'Windows' and ${{ github.event.inputs.overrideAnalyzer == 'true' }}
       shell: powershell
       run: |
-        $directLink = "${{ github.event.inputs.overrideAnalyzer }}"
+        $directLink = "${{ github.event.inputs.overrideAnalyzerLink }}"
         Invoke-WebRequest -Uri $directLink -OutFile "C:\Program Files (x86)\PVS-Studio\CompilerCommandsAnalyzer.exe"
 
     - name: analyzer after
